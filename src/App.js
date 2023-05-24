@@ -1,24 +1,52 @@
-import logo from './logo.svg';
-import './App.css';
+import { Fragment, useEffect, useState } from "react";
+import "./App.css";
+import MessagesTable from "./components/MessagesTable";
+import WsFunc from "./components/WsFunc";
+import Header from "./components/Header";
+
+const WEBSOCKET_URL = "wss://tso-take-home-chat-room.herokuapp.com";
 
 function App() {
+  const [objectMessages, setObjectMessages] = useState([]);
+
+  const { val: message } = WsFunc(WEBSOCKET_URL);
+
+  useEffect(() => {
+    if (message) {
+      let totalMessages = objectMessages;
+      let messageSplitted = message.split(":");
+      let numberofWords = messageSplitted[1].trim().split(/\s+/).length;
+      let indexOfElement = -1;
+
+      if (objectMessages.length !== 0) {
+        indexOfElement = objectMessages.findIndex(
+          (e) => e.name === messageSplitted[0]
+        );
+      }
+
+      if (indexOfElement > -1) {
+        totalMessages[indexOfElement].numOfWords += numberofWords;
+      } else {
+        totalMessages.push({
+          name: messageSplitted[0],
+          numOfWords: numberofWords,
+        });
+      }
+      setObjectMessages(totalMessages);
+    }
+  }, [message]);
+
   return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
+    <Fragment>
+      <Header />
+      <div className="main">
+        <div className="table">
+          {objectMessages.length !== 0 && (
+            <MessagesTable objectMessages={JSON.stringify(objectMessages)} />
+          )}
+        </div>
+      </div>
+    </Fragment>
   );
 }
 
